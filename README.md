@@ -42,3 +42,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```bash
 python3 tools/generate_icons.py
 ```
+
+## 许可证
+
+[MIT](LICENSE)
