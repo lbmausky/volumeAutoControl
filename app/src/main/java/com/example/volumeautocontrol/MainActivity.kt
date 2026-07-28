@@ -34,7 +34,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -44,6 +43,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.VolumeOff
+import androidx.compose.material.icons.automirrored.outlined.VolumeUp
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
@@ -353,9 +353,8 @@ private fun Hero(active: Boolean, subtitle: String) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
-            // 用 requiredSize 而非 size：前者忽略父级传入的约束，避免被压缩掉。
             modifier = Modifier
-                .requiredSize(96.dp)
+                .size(96.dp)
                 .clip(CircleShape)
                 .background(if (active) Blue500.copy(alpha = 0.18f) else Slate100.copy(alpha = 0.55f))
                 .border(
@@ -539,7 +538,12 @@ private fun LiveStatusCard(
                 "耳机连接",
                 if (GuardState.headsetConnected) "已连接" else "未连接",
             )
-            StatusLine(Icons.AutoMirrored.Outlined.VolumeOff, "媒体音量", "$volume / $maxVolume")
+            StatusLine(
+                // volume 由 MainActivity 的 ContentObserver 实时推上来，静音与有声的图标随之切换。
+                if (volume > 0) Icons.AutoMirrored.Outlined.VolumeUp else Icons.AutoMirrored.Outlined.VolumeOff,
+                "媒体音量",
+                "$volume / $maxVolume",
+            )
             StatusLine(Icons.Outlined.Schedule, "生效时段", scheduleStatusText(withinSchedule))
             StatusLine(Icons.Outlined.NotificationsActive, "本轮拦截", interceptStatusText(withinSchedule))
         }
