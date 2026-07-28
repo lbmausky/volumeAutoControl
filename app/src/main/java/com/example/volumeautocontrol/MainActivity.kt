@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -111,6 +112,9 @@ import com.example.volumeautocontrol.ui.theme.Slate700
 import com.example.volumeautocontrol.ui.theme.Slate800
 import com.example.volumeautocontrol.ui.theme.Slate900
 import com.example.volumeautocontrol.ui.theme.VolumeAutoControlTheme
+
+/** 半宽卡片顶部那一行的高度，暂停次数图标、时段图标、时段开关三者靠它对齐中心线。 */
+private val TOP_ROW_HEIGHT = 32.dp
 
 class MainActivity : ComponentActivity() {
 
@@ -218,7 +222,7 @@ fun GuardScreen(refreshKey: Int, modifier: Modifier = Modifier) {
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Hero(active = guardActive, subtitle = heroSubtitle(hasNotificationAccess, withinSchedule))
 
@@ -251,8 +255,10 @@ fun GuardScreen(refreshKey: Int, modifier: Modifier = Modifier) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(206.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                // 这个高度同时决定首屏的收尾：实时状态卡要完整露出、下方留一段空隙，
+                // 而「最近事件」标题要正好被顶到屏幕外。
+                .height(182.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             PauseCountCard(
                 modifier = Modifier
@@ -343,7 +349,7 @@ private fun Hero(active: Boolean, subtitle: String) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 24.dp, bottom = 16.dp),
+            .padding(top = 12.dp, bottom = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
@@ -366,7 +372,7 @@ private fun Hero(active: Boolean, subtitle: String) {
                 tint = if (active) Blue500 else Slate400,
             )
         }
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(12.dp))
         Text("耳机守护", fontSize = 28.sp, fontWeight = FontWeight.SemiBold, color = Slate900)
         Spacer(Modifier.height(4.dp))
         Text(subtitle, fontSize = 15.sp, color = if (active) Blue600 else Slate500)
@@ -404,18 +410,28 @@ private fun MainToggleCard(context: Context) {
 
 @Composable
 private fun PauseCountCard(modifier: Modifier, context: Context, onNumberClick: () -> Unit) {
-    GlassCard(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(
-            imageVector = Icons.AutoMirrored.Outlined.VolumeOff,
-            contentDescription = null,
+    GlassCard(
+        modifier = modifier,
+        contentPadding = 16.dp,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        // 与生效时段卡片共用 TOP_ROW_HEIGHT，两张卡片的顶部元素中心线才能对齐。
+        Row(
             modifier = Modifier
-                .align(Alignment.Start)
-                .size(20.dp),
-            tint = Slate300,
-        )
+                .fillMaxWidth()
+                .height(TOP_ROW_HEIGHT),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Outlined.VolumeOff,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = Slate300,
+            )
+        }
         Spacer(Modifier.weight(1f))
         Text("暂停次数", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Slate600)
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(8.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             StepButton(
                 icon = Icons.Outlined.Remove,
@@ -440,7 +456,7 @@ private fun PauseCountCard(modifier: Modifier, context: Context, onNumberClick: 
                 enabled = GuardState.pauseLimit < GuardState.MAX_PAUSE_LIMIT,
             ) { GuardState.setPauseLimit(context, GuardState.pauseLimit + 1) }
         }
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(4.dp))
         Text("次尝试后放行", fontSize = 11.sp, color = Slate400)
         Spacer(Modifier.weight(1f))
     }
@@ -453,28 +469,36 @@ private fun ScheduleCard(
     onStartClick: () -> Unit,
     onEndClick: () -> Unit,
 ) {
-    GlassCard(modifier = modifier) {
+    GlassCard(modifier = modifier, contentPadding = 16.dp) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(TOP_ROW_HEIGHT),
             horizontalArrangement = Arrangement.SpaceBetween,
-            // Switch 的布局高度约 32dp，scale 只缩放绘制不改变布局尺寸，
-            // 顶部对齐会让它的中心低于 20dp 的时钟图标，所以按中心对齐。
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(Icons.Outlined.Schedule, null, Modifier.size(20.dp), tint = Slate300)
-            Switch(
-                checked = GuardState.scheduleEnabled,
-                onCheckedChange = { GuardState.setScheduleEnabled(context, it) },
-                colors = switchColors(),
-                modifier = Modifier.scale(0.75f),
-            )
+            // Switch 内部带 48dp 的最小可点尺寸，直接放进 32dp 的行会撑破行高、
+            // 中心线又和图标错开；用 requiredHeight 把外框锁成 32dp，Switch 在框内
+            // 居中，视觉中心就等于行的中心。
+            Box(
+                modifier = Modifier.requiredHeight(TOP_ROW_HEIGHT),
+                contentAlignment = Alignment.Center,
+            ) {
+                Switch(
+                    checked = GuardState.scheduleEnabled,
+                    onCheckedChange = { GuardState.setScheduleEnabled(context, it) },
+                    colors = switchColors(),
+                    modifier = Modifier.scale(0.75f),
+                )
+            }
         }
         Spacer(Modifier.weight(1f))
         Column(modifier = Modifier.alpha(if (GuardState.scheduleEnabled) 1f else 0.4f)) {
             Text("生效时段", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Slate600)
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(2.dp))
             TimeText(GuardState.formatMinutes(GuardState.scheduleStart), GuardState.scheduleEnabled, onStartClick)
-            Text("至", fontSize = 12.sp, color = Slate400, modifier = Modifier.padding(vertical = 1.dp))
+            Text("至", fontSize = 12.sp, color = Slate400)
             TimeText(GuardState.formatMinutes(GuardState.scheduleEnd), GuardState.scheduleEnabled, onEndClick)
         }
     }
@@ -507,8 +531,8 @@ private fun LiveStatusCard(
             Spacer(Modifier.width(8.dp))
             Text("实时状态", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Slate900)
         }
-        Spacer(Modifier.height(14.dp))
-        Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
+        Spacer(Modifier.height(12.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
             StatusLine(Icons.Outlined.Shield, "守护服务", serviceStatusText(hasNotificationAccess))
             StatusLine(
                 Icons.Outlined.Headphones,
@@ -530,7 +554,7 @@ private fun RecentEvents() {
             fontSize = 15.sp,
             fontWeight = FontWeight.Medium,
             color = Slate700,
-            modifier = Modifier.padding(start = 4.dp, bottom = 12.dp),
+            modifier = Modifier.padding(start = 4.dp, top = 6.dp, bottom = 12.dp),
         )
         GlassCard(Modifier.fillMaxWidth(), radius = 20.dp, alpha = 0.60f, contentPadding = 16.dp) {
             if (GuardState.events.isEmpty()) {
