@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">耳机守护</string>
+    <string name="service_label">耳机守护服务</string>
+
+    <string name="channel_name">播放拦截提示</string>
+    <string name="channel_description">耳机未连接时拦截播放的提示</string>
+    <string name="blocked_title">耳机未连接</string>
+    <string name="blocked_text">已暂停「%1$s」的播放，再尝试 %2$d 次后将不再限制</string>
+    <string name="blocked_text_last">已暂停「%1$s」的播放，下次播放起不再限制</string>
+
+    <string name="bypass_title">已停止拦截</string>
+    <string name="bypass_by_count">已连续暂停 %1$d 次，本次断开期间不再限制播放。音量仍是静音，需要外放请手动调整。</string>
+    <string name="bypass_by_volume">你手动调整了音量，本次断开期间不再限制播放。</string>
+
+    <string name="ongoing_channel_name">守护运行状态</string>
+    <string name="ongoing_channel_description">显示耳机守护是否在后台运行</string>
+    <string name="ongoing_title">耳机守护运行中</string>
+    <string name="ongoing_headset_connected">耳机已连接</string>
+    <string name="ongoing_headset_missing">耳机未连接，媒体已静音</string>
+    <string name="ongoing_disabled">守护已暂时关闭</string>
+    <string name="ongoing_out_of_schedule">不在生效时段，%1$s–%2$s 才会介入</string>
+</resources>
