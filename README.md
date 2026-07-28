@@ -22,12 +22,46 @@
 
 ## 构建与安装
 
+调试版：
+
 ```bash
 ./gradlew assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
 小米、红米等机型需要先在开发者选项里打开「USB 安装」，否则安装会报 `INSTALL_FAILED_USER_RESTRICTED`。
+
+## 正式签名打包
+
+正式包需要项目根目录下有 `keystore.properties`，该文件和密钥库都不进版本库。缺少它时项目仍可正常构建调试版，只是打不出正式包。
+
+先生成密钥库，有效期给足，避免证书过期后无法再发布更新：
+
+```bash
+keytool -genkeypair -keystore ~/.android-keystores/volumeautocontrol.jks \
+  -alias volumeautocontrol -keyalg RSA -keysize 4096 -validity 10000
+```
+
+再建 `keystore.properties`，填入密钥库的绝对路径、别名和密码：
+
+```properties
+storeFile=/Users/<用户名>/.android-keystores/volumeautocontrol.jks
+storePassword=<密码>
+keyAlias=volumeautocontrol
+keyPassword=<密码>
+```
+
+然后打包并校验签名：
+
+```bash
+./gradlew assembleRelease
+$ANDROID_HOME/build-tools/<版本>/apksigner verify --print-certs \
+  app/build/outputs/apk/release/app-release.apk
+```
+
+密钥库和密码必须备份到本机以外的地方。Android 靠签名校验应用归属，密钥一旦丢失就无法再覆盖安装更新，只能卸载重装，用户数据全部丢失。
+
+发新版本时记得同步提高 `app/build.gradle.kts` 里的 `versionCode`，否则系统会拒绝安装。
 
 ## 首次运行需要授权
 

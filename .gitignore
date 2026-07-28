@@ -13,3 +13,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# 签名密钥与密码绝对不能进版本库
+keystore.properties
+*.jks
+*.keystore
