@@ -1,12 +1,15 @@
-# Add project specific R8 rules here.
-# AGP will combine all keep rule files in src/main/keepRules to pass to R8
+# R8 keep 规则。AGP 会合并 src/main/keepRules 下的所有文件传给 R8。
+# 规则语法见 https://d.android.com/r/tools/r8/keep-rules
 #
-# For more details, see
-#   https://d.android.com/r/tools/r8/keep-rules
-
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# 本项目目前不需要任何手写规则，原因如下，改动前请先确认这些前提还成立：
+#
+# - 没有反射、没有 JSON 序列化、没有 WebView JS 接口，也没有按字符串名字加载的类。
+# - MainActivity、GuardForegroundService、VolumeGuardService、BootReceiver 由系统按类名
+#   实例化，但它们都在 AndroidManifest 里声明，AAPT2 会为清单组件自动生成
+#   "-keep class ... { <init>(); }"，产物见
+#   app/build/intermediates/aapt_proguard_file/release/*/aapt_rules.txt。
+#   可在 app/build/outputs/mapping/release/mapping.txt 里核对这四个类映射到自身、未被改名。
+# - Compose、Material3、AndroidX 各自带 consumer 规则，随依赖一起生效。
+#
+# 如果以后引入反射或序列化（例如加配置文件解析、加 kotlinx.serialization），
+# 就要在这里补规则，并且必须实测 release 包，编译通过说明不了什么。

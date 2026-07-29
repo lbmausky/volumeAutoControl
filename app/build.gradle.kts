@@ -45,8 +45,10 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.findByName("release")
+            // 开启 R8。体积主要来自 material-icons-extended，绝大多数图标没用到，靠 R8 剔除。
+            // keep 规则放在 src/main/keepRules/，清单里声明的组件由 AGP 自动生成规则，不必手写。
             optimization {
-                enable = false
+                enable = true
             }
         }
         // 调试版换成独立包名，与正式版共存，从 IDE 点运行不必先卸载正式版。
