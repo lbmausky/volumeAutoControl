@@ -86,6 +86,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -94,6 +95,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationManagerCompat
 import com.example.volumeautocontrol.ui.AuroraBackground
+import com.example.volumeautocontrol.ui.auroraGradient
 import com.example.volumeautocontrol.ui.GlassActionButton
 import com.example.volumeautocontrol.ui.GlassCard
 import com.example.volumeautocontrol.ui.StatusLine
@@ -205,6 +207,8 @@ fun GuardScreen(refreshKey: Int, modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            // 渐变挂在滚动内容上，不跟着视口走，长截屏才能拼对，见 auroraGradient 的说明
+            .auroraGradient(LocalWindowInfo.current.containerSize.height.toFloat())
             .padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {

@@ -23,8 +23,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -45,13 +47,33 @@ import com.example.volumeautocontrol.ui.theme.Slate700
  */
 @Composable
 fun AuroraBackground(modifier: Modifier = Modifier) {
-    Box(
-        modifier
-            .fillMaxSize()
-            .background(Brush.linearGradient(colorStops = AuroraStops.toTypedArray()))
-            .background(AuroraScrim)
-    )
+    Box(modifier.fillMaxSize().auroraGradient())
 }
+
+/** 在所在区域内铺满一层渐变，渐变随区域大小拉伸。 */
+fun Modifier.auroraGradient(): Modifier =
+    this.background(Brush.linearGradient(colorStops = AuroraStops.toTypedArray()))
+        .background(AuroraScrim)
+
+/**
+ * 同上，但渐变固定在 [heightPx] 高度内铺完，超出部分停在末端色。
+ *
+ * 这个重载是给可滚动内容用的（写在 verticalScroll 之后，背景就跟着内容走而不是跟着视口走）。
+ * 小米长截屏靠比对相邻两帧的重叠区来找拼接位置，背景跟着视口走时同一段内容在不同帧里颜色不同，
+ * 匹配失败，拼出来的长图会错位并丢掉中间大段内容。
+ *
+ * [heightPx] 传一屏的高度，首屏观感就和渐变跟着视口走时一致；代价是第一屏以下是单一的末端色。
+ */
+fun Modifier.auroraGradient(heightPx: Float): Modifier =
+    this.background(
+            Brush.linearGradient(
+                colorStops = AuroraStops.toTypedArray(),
+                start = Offset.Zero,
+                end = Offset(0f, heightPx),
+                tileMode = TileMode.Clamp,
+            )
+        )
+        .background(AuroraScrim)
 
 /** 半透明白卡片。同理不做背景模糊，用不透明度直接压在渐变上，视觉等价。 */
 @Composable
