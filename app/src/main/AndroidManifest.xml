@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- 用于读取正在播放的应用名称，否则通知里只能显示包名。 -->
     <queries>
@@ -44,6 +45,19 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="持续监听耳机连接状态，断开时静音并拦截播放" />
         </service>
+
+        <!-- 系统要能把开机广播投进来，所以必须 exported。QUICKBOOT_POWERON 是小米等
+             定制系统在“快速开机”时代替 BOOT_COMPLETED 发的那条。 -->
+        <receiver
+            android:name=".BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
 
         <service
             android:name=".VolumeGuardService"

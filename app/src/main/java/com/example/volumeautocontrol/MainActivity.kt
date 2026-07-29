@@ -11,7 +11,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
-import android.service.notification.NotificationListenerService
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -52,6 +51,7 @@ import androidx.compose.material.icons.outlined.Headphones
 import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.MonitorHeart
 import androidx.compose.material.icons.outlined.NotificationsActive
+import androidx.compose.material.icons.outlined.PowerSettingsNew
 import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material.icons.outlined.RestartAlt
 import androidx.compose.material.icons.outlined.Schedule
@@ -157,22 +157,6 @@ class MainActivity : ComponentActivity() {
 
     private companion object {
         const val TRANSPARENT = android.graphics.Color.TRANSPARENT
-    }
-}
-
-/**
- * 定制系统杀掉应用后不会自动重新绑定通知监听服务，这里主动请求重绑，并确保前台服务在跑。
- * 界面处于前台时调用，不会触发 Android 12 起对后台拉起前台服务的限制。
- */
-private fun reviveGuard(context: Context) {
-    if (!hasNotificationAccess(context)) return
-    runCatching {
-        NotificationListenerService.requestRebind(
-            ComponentName(context, VolumeGuardService::class.java)
-        )
-    }
-    if (GuardState.enabled) {
-        GuardForegroundService.start(context)
     }
 }
 
@@ -296,10 +280,14 @@ fun GuardScreen(refreshKey: Int, modifier: Modifier = Modifier) {
             openSettings(context, Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
         }
 
+        GlassActionButton(Icons.Outlined.PowerSettingsNew, "允许开机自启") {
+            openSettings(context, *autoStartIntents())
+        }
+
         ManualPanel(expanded = manualExpanded, onToggle = { manualExpanded = !manualExpanded })
 
         Text(
-            "建议把它设成「允许自启动」，再在最近任务里锁定，免得被系统清理掉。",
+            "重启后要靠自启动权限才能自己起来。再在最近任务里锁定一下，免得被系统清理掉。",
             fontSize = 12.sp,
             lineHeight = 19.sp,
             color = Slate400,
@@ -624,6 +612,7 @@ private fun ManualPanel(expanded: Boolean, onToggle: () -> Unit) {
                         "时段开始时如果耳机不在，会补一次静音。"
                 )
                 ManualText("插回耳机时也不动音量。耳机那边的音量系统自己记着，插上就是原来那档。")
+                ManualText("手机重启后守护会自己起来。但小米这类系统得先给「自启动」权限，不然收不到开机通知，重启后就是停着的。")
             }
         }
     }
@@ -760,19 +749,36 @@ private fun TimeRangePickerDialog(
     )
 }
 
-private fun hasNotificationAccess(context: Context): Boolean =
-    NotificationManagerCompat.getEnabledListenerPackages(context).contains(context.packageName)
-
 private fun appDetailsIntent(context: Context): Intent =
     Intent(
         Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
         Uri.fromParts("package", context.packageName, null),
     )
 
-private fun openSettings(context: Context, intent: Intent) {
-    runCatching { context.startActivity(intent) }.onFailure {
-        runCatching { context.startActivity(appDetailsIntent(context)) }.onFailure {
-            Toast.makeText(context, "打不开这个设置页，请到系统设置里手动找一下", Toast.LENGTH_LONG).show()
-        }
+/**
+ * 依次尝试候选页面，第一个能打开的就停。
+ *
+ * 定制系统的设置页（比如小米的自启动管理）在别家机型上根本不存在，startActivity 会抛
+ * ActivityNotFoundException，所以每个候选都得包住，最后统一降级到应用详情页。
+ */
+private fun openSettings(context: Context, vararg intents: Intent) {
+    for (intent in intents) {
+        if (runCatching { context.startActivity(intent) }.isSuccess) return
     }
+    if (runCatching { context.startActivity(appDetailsIntent(context)) }.isSuccess) return
+    Toast.makeText(context, "打不开这个设置页，请到系统设置里手动找一下", Toast.LENGTH_LONG).show()
 }
+
+/**
+ * 小米系的自启动管理页。先用 action，它跨 MIUI 版本更稳；不行再试写死的组件名。
+ * 两个都打不开时由 [openSettings] 兜底到应用详情页。
+ */
+private fun autoStartIntents(): Array<Intent> = arrayOf(
+    Intent("miui.intent.action.OP_AUTO_START").addCategory(Intent.CATEGORY_DEFAULT),
+    Intent().setComponent(
+        ComponentName(
+            "com.miui.securitycenter",
+            "com.miui.permcenter.autostart.AutoStartManagementActivity",
+        )
+    ),
+)
