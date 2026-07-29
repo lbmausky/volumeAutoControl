@@ -246,9 +246,25 @@ class GuardForegroundService : Service() {
         }
     }
 
+    /**
+     * 会话所属应用的名字，取不到就退回包名。
+     *
+     * 取不到是 Android 11 起的包可见性限制，不是异常状况。清单里的 `<queries>` 只声明了
+     * MEDIA_BUTTON，只能看到声明了媒体按键组件的应用（网易云音乐、小米音乐这些）；像 UC 浏览器
+     * 那样在网页里放音频的应用并不声明，静态规则覆盖不到，查名字会抛 NameNotFoundException。
+     *
+     * 系统另外会在应用间产生交互后动态补一条授予，之后就能查到名字，但这条授予在本应用被重装或
+     * 手机重启后会清空，所以清空后的第一次拦截会显示包名。用 `adb shell dumpsys package queries`
+     * 可以核对，静态的在 queries via component 段，动态的在 queryable via interaction 段。
+     *
+     * 要彻底消掉只能申请 QUERY_ALL_PACKAGES，那是敏感权限，为了日志里一个名字不划算。
+     */
     private fun appLabel(packageName: String): String = runCatching {
         packageManager.getApplicationLabel(packageManager.getApplicationInfo(packageName, 0)).toString()
-    }.getOrDefault(packageName)
+    }.getOrElse {
+        Log.w(TAG, "app label lookup failed for $packageName", it)
+        packageName
+    }
 
     private fun goForeground() {
         val notification = buildOngoingNotification()
