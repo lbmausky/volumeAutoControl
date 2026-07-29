@@ -17,8 +17,9 @@ import org.junit.Assert.*
 class ExampleInstrumentedTest {
     @Test
     fun useAppContext() {
-        // Context of the app under test.
+        // 仪器测试跑在 debug 变体上，包名是 applicationId 加 .debug 后缀，
+        // 不是 namespace com.example.volumeautocontrol。
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.example.volumeautocontrol", appContext.packageName)
+        assertEquals("com.lbmausky.volumeautocontrol.debug", appContext.packageName)
     }
 }

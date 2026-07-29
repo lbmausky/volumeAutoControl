@@ -1,0 +1,7 @@
+<!-- debug 源集会覆盖 main 里的同名资源，用来在桌面和系统通知使用权列表里
+     区分调试版与正式版。用 resValue 覆盖会和 main 的 strings.xml 撞成重复资源，
+     所以走源集覆盖。 -->
+<resources>
+    <string name="app_name">耳机守护 Debug</string>
+    <string name="service_label">耳机守护服务 Debug</string>
+</resources>

@@ -49,6 +49,12 @@ android {
                 enable = false
             }
         }
+        // 调试版换成独立包名，与正式版共存，从 IDE 点运行不必先卸载正式版。
+        // 它是另一个应用，通知使用权、通知权限、电池白名单都要单独授予。
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
