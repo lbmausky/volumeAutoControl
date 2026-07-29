@@ -51,7 +51,15 @@ class HeadsetWatcher(
         override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>?) = sync()
     }
 
+    /**
+     * 先同步落一次权威值，再注册回调。
+     *
+     * 注册时系统给的那次“当前设备列表”回调是 post 到 [handler] 的，要等当前这一轮消息处理完才会到。
+     * 调用方（服务的 onCreate）紧接着就会开始处理媒体会话，那时候 [GuardState.headsetConnected]
+     * 还是初始的 false，耳机明明连着也会把正在播放的内容按停。所以这里必须同步先查一次。
+     */
     fun start() {
+        sync()
         audioManager.registerAudioDeviceCallback(callback, handler)
     }
 

@@ -207,6 +207,11 @@ class GuardForegroundService : Service() {
         if (state?.state != PlaybackState.STATE_PLAYING) return
         if (!GuardState.enabled || GuardState.headsetConnected || GuardState.bypassed) return
         if (!GuardState.isWithinSchedule()) return
+        // 动手前再查一次权威值兜底。缓存值靠音频设备回调维护，回调只要比播放状态变化晚一步，
+        // 就会把用户正在听的内容按停。查设备列表只是一次 binder 调用，而这里只在播放状态变化时才走到，
+        // 代价远小于误暂停。不在这里改写缓存值：耳机状态的记账（写日志、归零本轮计数）由
+        // HeadsetWatcher 统一负责，抢着改反而会让它漏掉一次连接事件。
+        if (HeadsetStatus.isConnected(this)) return
 
         if (GuardState.interceptCount >= GuardState.pauseLimit) {
             bypass(getString(R.string.bypass_by_count, GuardState.pauseLimit))
