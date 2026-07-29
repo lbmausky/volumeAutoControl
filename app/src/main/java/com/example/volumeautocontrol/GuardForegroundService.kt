@@ -83,7 +83,7 @@ class GuardForegroundService : Service() {
         handler.postDelayed(scheduleTicker, SCHEDULE_TICK_MS)
 
         GuardState.serviceConnected = true
-        GuardState.log("守护服务已启动")
+        GuardState.log("守护已启动")
         updateOngoingNotification()
     }
 
@@ -101,7 +101,7 @@ class GuardForegroundService : Service() {
         handler.removeCallbacks(scheduleTicker)
         watched.values.forEach { it.controller.unregisterCallback(it.callback) }
         watched.clear()
-        GuardState.log("守护服务已停止")
+        GuardState.log("守护已停止")
         super.onDestroy()
     }
 
@@ -109,11 +109,11 @@ class GuardForegroundService : Service() {
         GuardState.resetCycle()
         updateOngoingNotification()
         if (!GuardState.enabled) {
-            GuardState.log("守护未开启，忽略这次断开")
+            GuardState.log("守护没开，这次断开不管")
             return
         }
         if (!GuardState.isWithinSchedule()) {
-            GuardState.log("不在生效时段，忽略这次断开")
+            GuardState.log("不在生效时段，这次断开不管")
             return
         }
         MediaVolume.mute(this)
@@ -153,7 +153,7 @@ class GuardForegroundService : Service() {
                 MediaVolume.mute(this)
             }
         } else {
-            GuardState.log("已离开生效时段，守护暂停，音量保持不变")
+            GuardState.log("离开生效时段，暂停守护，音量不动")
         }
         updateOngoingNotification()
     }
@@ -172,7 +172,7 @@ class GuardForegroundService : Service() {
             manager.addOnActiveSessionsChangedListener(sessionsChangedListener, token)
             syncWatchedSessions(manager.getActiveSessions(token))
         }.onFailure {
-            GuardState.log("拿不到媒体会话控制权，请确认通知使用权已开启")
+            GuardState.log("拿不到播放控制权，检查一下通知使用权")
             Log.w(TAG, "media session access denied", it)
         }
     }
@@ -218,7 +218,7 @@ class GuardForegroundService : Service() {
         GuardState.interceptCount++
 
         val remaining = GuardState.pauseLimit - GuardState.interceptCount
-        GuardState.log("$name 尝试播放，已暂停（第 ${GuardState.interceptCount} 次，还剩 $remaining 次）")
+        GuardState.log("「$name」想播放，已暂停（第 ${GuardState.interceptCount} 次，还剩 $remaining 次）")
         postNotification(
             getString(R.string.blocked_title),
             if (remaining > 0) {
@@ -236,7 +236,7 @@ class GuardForegroundService : Service() {
             if (controller.playbackState?.state == PlaybackState.STATE_PLAYING) {
                 val name = appLabel(controller.packageName)
                 controller.transportControls.pause()
-                GuardState.log("$name 正在播放，已暂停")
+                GuardState.log("「$name」正在播放，已暂停")
             }
         }
     }

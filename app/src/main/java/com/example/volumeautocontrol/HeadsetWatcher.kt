@@ -67,7 +67,7 @@ class HeadsetWatcher(
 
         if (!initialised) {
             initialised = true
-            GuardState.log(if (connected) "服务启动，检测到耳机已连接" else "服务启动，当前没有耳机")
+            GuardState.log(if (connected) "启动时耳机已连接" else "启动时没有耳机")
             return
         }
         if (previous == connected) return

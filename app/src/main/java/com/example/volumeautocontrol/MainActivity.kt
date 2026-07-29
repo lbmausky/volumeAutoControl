@@ -228,8 +228,8 @@ fun GuardScreen(refreshKey: Int, modifier: Modifier = Modifier) {
 
         if (!hasNotificationAccess) {
             SetupCard(
-                title = "还需要开启「通知使用权」",
-                description = "没有这个权限就拿不到其它应用的播放控制权，守护会形同虚设。点下面的按钮，在列表里找到「耳机守护」并允许。",
+                title = "还要开「通知使用权」",
+                description = "没有它就没法暂停别的应用的播放，守护等于没开。点下面的按钮，在列表里找到「耳机守护」打开开关。",
                 buttonText = "去开启",
                 onClick = { openSettings(context, Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) },
             )
@@ -237,8 +237,8 @@ fun GuardScreen(refreshKey: Int, modifier: Modifier = Modifier) {
 
         if (!canPostNotifications) {
             SetupCard(
-                title = "还需要允许发送通知",
-                description = "拦截播放时用通知告诉你原因，不然你会不知道为什么放不出声。",
+                title = "还要允许发通知",
+                description = "拦下播放时会发条通知说明原因，不然你会莫名其妙听不到声音。",
                 buttonText = "去允许",
                 onClick = {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -289,17 +289,17 @@ fun GuardScreen(refreshKey: Int, modifier: Modifier = Modifier) {
         GlassActionButton(Icons.Outlined.RestartAlt, "重启守护服务") {
             GuardForegroundService.stop(context)
             reviveGuard(context)
-            Toast.makeText(context, "已请求重启守护服务", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "正在重启守护服务", Toast.LENGTH_SHORT).show()
         }
 
-        GlassActionButton(Icons.Outlined.Tune, "加入电池优化白名单") {
+        GlassActionButton(Icons.Outlined.Tune, "取消电池优化限制") {
             openSettings(context, Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
         }
 
         ManualPanel(expanded = manualExpanded, onToggle = { manualExpanded = !manualExpanded })
 
         Text(
-            "建议将本应用设为「允许自启动」并锁定在最近任务中，以防被系统清理。",
+            "建议把它设成「允许自启动」，再在最近任务里锁定，免得被系统清理掉。",
             fontSize = 12.sp,
             lineHeight = 19.sp,
             color = Slate400,
@@ -312,7 +312,7 @@ fun GuardScreen(refreshKey: Int, modifier: Modifier = Modifier) {
 
     if (editingScheduleStart) {
         TimeRangePickerDialog(
-            title = "生效时段的开始时间",
+            title = "从几点开始",
             initialMinutes = GuardState.scheduleStart,
             onDismiss = { editingScheduleStart = false },
             onConfirm = {
@@ -323,7 +323,7 @@ fun GuardScreen(refreshKey: Int, modifier: Modifier = Modifier) {
     }
     if (editingScheduleEnd) {
         TimeRangePickerDialog(
-            title = "生效时段的结束时间",
+            title = "到几点结束",
             initialMinutes = GuardState.scheduleEnd,
             onDismiss = { editingScheduleEnd = false },
             onConfirm = {
@@ -389,7 +389,7 @@ private fun MainToggleCard(context: Context) {
             Column {
                 Text("守护服务", fontSize = 17.sp, fontWeight = FontWeight.Medium, color = Slate900)
                 Spacer(Modifier.height(2.dp))
-                Text("防止断开耳机后突然外放", fontSize = 13.sp, color = Slate500)
+                Text("耳机一断开就静音，防止突然外放", fontSize = 13.sp, color = Slate500)
             }
             Switch(
                 checked = GuardState.enabled,
@@ -456,7 +456,7 @@ private fun PauseCountCard(modifier: Modifier, context: Context, onNumberClick: 
             ) { GuardState.setPauseLimit(context, GuardState.pauseLimit + 1) }
         }
         Spacer(Modifier.height(4.dp))
-        Text("次尝试后放行", fontSize = 11.sp, color = Slate400)
+        Text("次之后就不拦了", fontSize = 11.sp, color = Slate400)
         Spacer(Modifier.weight(1f))
     }
 }
@@ -562,7 +562,7 @@ private fun RecentEvents() {
         )
         GlassCard(Modifier.fillMaxWidth(), radius = 20.dp, alpha = 0.60f, contentPadding = 16.dp) {
             if (GuardState.events.isEmpty()) {
-                Text("还没有记录。插上耳机再拔掉试试。", fontSize = 13.sp, color = Slate500)
+                Text("还没有记录。插上耳机再断开试试。", fontSize = 13.sp, color = Slate500)
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     GuardState.events.forEach { event ->
@@ -614,15 +614,16 @@ private fun ManualPanel(expanded: Boolean, onToggle: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 ManualText(
-                    "耳机断开后，前 ${GuardState.pauseLimit} 次播放会被暂停，之后本轮不再限制。" +
-                        "插回耳机或下次断开时重新计数。设为 0 表示完全不拦截。"
+                    "耳机断开后，前 ${GuardState.pauseLimit} 次播放都会被暂停，再播就不拦了。" +
+                        "插回耳机、或者下次断开时重新数。填 0 就完全不拦。"
                 )
-                ManualText("断开期间只要你自己动过音量键，就会立刻停止拦截——那说明你清楚自己在外放。")
+                ManualText("断开期间只要你按过音量键，就立刻不拦了——按了就说明你知道在外放。")
                 ManualText(scheduleHintText())
                 ManualText(
-                    "时段结束时不会自动恢复音量，避免在你没操作的情况下突然外放。" +
-                        "时段开始时如果耳机不在位，会补一次静音。"
+                    "时段结束时不会自动把音量调回来，免得你没动手就突然外放。" +
+                        "时段开始时如果耳机不在，会补一次静音。"
                 )
+                ManualText("插回耳机时也不动音量。耳机那边的音量系统自己记着，插上就是原来那档。")
             }
         }
     }
@@ -667,23 +668,24 @@ private fun switchColors() = SwitchDefaults.colors(
 )
 
 private fun heroSubtitle(hasNotificationAccess: Boolean, withinSchedule: Boolean): String = when {
-    !GuardState.enabled -> "服务已停止"
-    !hasNotificationAccess -> "缺少通知使用权"
-    !withinSchedule -> "时段外待机中"
-    GuardState.bypassed -> "本轮已放行"
-    else -> "守护运行中"
+    !GuardState.enabled -> "守护已关闭"
+    !hasNotificationAccess -> "还没给通知使用权"
+    !withinSchedule -> "不在生效时段，暂时不管"
+    GuardState.bypassed -> "这轮不拦了"
+    else -> "正在守护"
 }
 
 private fun serviceStatusText(hasNotificationAccess: Boolean): String = when {
-    !hasNotificationAccess -> "缺少通知使用权"
+    !hasNotificationAccess -> "没通知使用权"
     GuardState.serviceConnected -> "运行中"
     else -> "正在启动"
 }
 
+// 实时状态右侧的胶囊标签空间很紧，这几个取值要保持短，长了会折行撑高卡片。
 private fun interceptStatusText(withinSchedule: Boolean): String = when {
-    !withinSchedule -> "时段外，不拦截"
-    GuardState.headsetConnected -> "耳机在位，不拦截"
-    GuardState.bypassed -> "已放行，本轮不再拦截"
+    !withinSchedule -> "时段外不拦"
+    GuardState.headsetConnected -> "耳机还在，不拦"
+    GuardState.bypassed -> "这轮不再拦"
     else -> "${GuardState.interceptCount} / ${GuardState.pauseLimit} 次"
 }
 
@@ -694,13 +696,13 @@ private fun scheduleStatusText(withinSchedule: Boolean): String = when {
 }
 
 private fun scheduleHintText(): String = when {
-    !GuardState.scheduleEnabled -> "生效时段已关闭，当前全天生效。"
-    GuardState.scheduleStart == GuardState.scheduleEnd -> "起止时间相同，等同于全天生效。"
+    !GuardState.scheduleEnabled -> "没开生效时段，现在是全天生效。"
+    GuardState.scheduleStart == GuardState.scheduleEnd -> "起止时间一样，等于全天生效。"
     GuardState.scheduleStart > GuardState.scheduleEnd ->
-        "跨午夜时段：当天 ${GuardState.formatMinutes(GuardState.scheduleStart)} 到次日 " +
+        "跨午夜：当天 ${GuardState.formatMinutes(GuardState.scheduleStart)} 到次日 " +
             "${GuardState.formatMinutes(GuardState.scheduleEnd)} 之间生效。"
     else -> "每天 ${GuardState.formatMinutes(GuardState.scheduleStart)} 到 " +
-        "${GuardState.formatMinutes(GuardState.scheduleEnd)} 之间生效，其余时间不介入。"
+        "${GuardState.formatMinutes(GuardState.scheduleEnd)} 生效，其它时间什么都不做。"
 }
 
 @Composable
@@ -719,7 +721,7 @@ private fun PauseLimitDialog(initial: Int, onDismiss: () -> Unit, onConfirm: (In
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "可填 0 到 ${GuardState.MAX_PAUSE_LIMIT}，0 表示完全不拦截。",
+                    "填 0 到 ${GuardState.MAX_PAUSE_LIMIT}，填 0 就完全不拦。",
                     fontSize = 12.sp,
                     color = Slate500,
                 )
@@ -770,7 +772,7 @@ private fun appDetailsIntent(context: Context): Intent =
 private fun openSettings(context: Context, intent: Intent) {
     runCatching { context.startActivity(intent) }.onFailure {
         runCatching { context.startActivity(appDetailsIntent(context)) }.onFailure {
-            Toast.makeText(context, "这台设备找不到对应的设置页，请手动进入系统设置", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "打不开这个设置页，请到系统设置里手动找一下", Toast.LENGTH_LONG).show()
         }
     }
 }

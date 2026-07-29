@@ -89,7 +89,7 @@ object GuardState {
     fun setScheduleEnabled(context: Context, value: Boolean) {
         scheduleEnabled = value
         prefs(context).edit().putBoolean(KEY_SCHEDULE_ENABLED, value).apply()
-        log(if (value) "已限定生效时段 ${formatMinutes(scheduleStart)}–${formatMinutes(scheduleEnd)}" else "已改为全天生效")
+        log(if (value) "只在 ${formatMinutes(scheduleStart)}–${formatMinutes(scheduleEnd)} 生效" else "改成全天生效")
     }
 
     fun setSchedule(context: Context, start: Int, end: Int) {
@@ -99,7 +99,7 @@ object GuardState {
             .putInt(KEY_SCHEDULE_START, scheduleStart)
             .putInt(KEY_SCHEDULE_END, scheduleEnd)
             .apply()
-        log("生效时段改为 ${formatMinutes(scheduleStart)}–${formatMinutes(scheduleEnd)}")
+        log("生效时段改成 ${formatMinutes(scheduleStart)}–${formatMinutes(scheduleEnd)}")
     }
 
     /**

@@ -39,15 +39,15 @@ object MediaVolume {
         val volume = current(context)
         if (volume == 0) {
             lastAppliedVolume = 0
-            GuardState.log("媒体音量本来就是 0，无需静音")
+            GuardState.log("音量本来就是 0，不用静音")
             return
         }
         try {
             audioManager(context).setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0)
             lastAppliedVolume = 0
-            GuardState.log("已静音（原音量 $volume）")
+            GuardState.log("已静音（原来是 $volume）")
         } catch (e: SecurityException) {
-            GuardState.log("静音失败：系统拒绝了请求")
+            GuardState.log("静音失败，系统拒绝了")
             Log.w(TAG, "setStreamVolume(0) failed", e)
         }
     }
